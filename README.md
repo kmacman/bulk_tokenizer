@@ -1,4 +1,4 @@
-# Token_Vocab_EventExpr – Tokenization Runner
+# Medical Event Foundation Model - Bulk Tokenizer
 
 This small app trains a set of tokenizer configurations on MEDS-formatted EHR data and then applies those tokenizers to train/validation/test splits. It is designed to support experiments comparing different tokenization strategies (concept vs BPE, discrete vs continuous numeric handling, factored vs fused sequences) for downstream medical event transformer models.
 
@@ -81,10 +81,10 @@ N_TRAIN_FILES = 292
 RUN_PATH = '/path/to/data/processed/run_DATE_TIME'
 DEFAULT_COLS = ["subject_id", "time", "code", "numeric_value", "text_value"]
 CONFIGS = [
-    dict(code_mode='concept', num_type='discrete', num_seq='factored'),
-    dict(code_mode='concept', num_type='discrete', num_seq='fused'),
     dict(code_mode='concept', num_type='continuous', num_seq='factored'),
     dict(code_mode='concept', num_type='continuous', num_seq='fused'),
+    dict(code_mode='concept', num_type='discrete', num_seq='factored'),
+    dict(code_mode='concept', num_type='discrete', num_seq='fused'),
     dict(code_mode='bpe', num_type='discrete', num_seq='factored', final_vocab_size=4096),
     dict(code_mode='bpe', num_type='discrete', num_seq='factored', final_vocab_size=8192),
     dict(code_mode='bpe', num_type='discrete', num_seq='factored', final_vocab_size=16384),
