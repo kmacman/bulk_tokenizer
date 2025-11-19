@@ -57,6 +57,7 @@ uv sync
 
 ## Directory Layout
 
+``` bash
 Token_Vocab_EventExpr/
 ├─ data/
 │  ├─ raw/
@@ -69,7 +70,7 @@ Token_Vocab_EventExpr/
 ├─ logs/
 │  └─ tokenizer.log
 └─ run_tokenization.py
-
+```
 
 ## Example Config Block
 ``` Python
