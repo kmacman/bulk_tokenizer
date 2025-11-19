@@ -96,19 +96,19 @@ CONFIGS = [
 
 Each config becomes a tag/folder like concept_discrete_factored or bpe_discrete_factored_4096.
 
-Process
+## Process
 
-Load training data: Loads N_TRAIN_FILES from TRAIN_FOLDER using Polars.
+1. Load training data: Loads N_TRAIN_FILES from TRAIN_FOLDER using Polars.
 
-Train tokenizers: Each config creates a Tokenizer, applies fix_nomenclature(), trains on the dataframe, and saves <tag>.pkl under <RUN_PATH>/<tag>/.
+2. Train tokenizers: Each config creates a Tokenizer, applies fix_nomenclature(), trains on the dataframe, and saves <tag>.pkl under <RUN_PATH>/<tag>/.
 
-Tokenize all splits: Collects all parquet files from train/val/test folders, tokenizes each, and writes mirrored outputs:
+3. Tokenize all splits: Collects all parquet files from train/val/test folders, tokenizes each, and writes mirrored outputs:
 
-<RUN_PATH>/<tag>/<split_dir>/<filename>.parquet
+  <RUN_PATH>/<tag>/<split_dir>/<filename>.parquet
 
-<RUN_PATH>/<tag>/<split_dir>/num_<filename>.parquet (if numeric tokens exist)
+  <RUN_PATH>/<tag>/<split_dir>/num_<filename>.parquet (if numeric tokens exist)
 
-Metadata & Logging
+## Metadata & Logging
 
 At the start of each run, write_run_metadata() creates:
 
@@ -116,13 +116,13 @@ run_metadata.json — timestamp, paths, column list, and full configs.
 
 README.md — readable summary of the run.
 
-Logging:
+## Logging:
 
 Written to logs/tokenizer.log and stdout.
 
 Uses logger.info() for progress and logger.exception() for errors.
 
-Usage
+## Usage
 ``` Bash
 module add uv # if you're on Bouchet and haven't already added it
 uv run tokenize_batch.py
