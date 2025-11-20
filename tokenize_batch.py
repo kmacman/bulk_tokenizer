@@ -1,5 +1,3 @@
-# - [ ] TODO: Add some sort of metadata or readme file that gets saved to the run folder when ran
-
 import polars as pl
 import logging
 from pathlib import Path
@@ -7,34 +5,32 @@ from modules.tokenizer_v2 import Tokenizer
 import pickle
 from datetime import datetime
 import json
+import yaml
+from typing import Any
+import argparse
+
+
 
 ##############
 ####config####
 ### MEDS format INPUT data###
-TRAIN_FOLDER = '/nfs/roberts/project/pi_ajl89/kam385/Token_Vocab_EventExpr/data/raw/train'
-VAL_FOLDER = '/nfs/roberts/project/pi_ajl89/kam385/Token_Vocab_EventExpr/data/raw/val_filtered'
-TEST_FOLDER = '/nfs/roberts/project/pi_ajl89/kam385/Token_Vocab_EventExpr/data/raw/test_filtered'
+def load_config(config_path: str | Path = "config.yaml") -> dict[str, Any]:
+    config_path = Path(config_path)
+    with config_path.open() as f:
+        cfg = yaml.safe_load(f)
 
-N_TRAIN_FILES = 292 # number of files in the train folder 
+    data_root = Path(cfg["paths"]["data_root"])
 
-RUN_PATH = '/nfs/roberts/project/pi_ajl89/kam385/bulk_tokenizer/data/tokenized/full_tokenization_11_19_2025' #This is the path to the folder where all of the config subfolders will be saved, with the tokenized outputs and tok.pkl files
-
-DEFAULT_COLS = ["subject_id", "time", "code", "numeric_value", "text_value"] #This shouldn't need to be changed
-
-CONFIGS = [
-    dict(code_mode='concept', num_type='discrete', num_seq='factored'),
-    dict(code_mode='concept', num_type='discrete', num_seq='fused'),
-    dict(code_mode='concept', num_type='continuous', num_seq='factored'),
-    dict(code_mode='concept', num_type='continuous', num_seq='fused'),
-    dict(code_mode='bpe', num_type='discrete', num_seq='factored',final_vocab_size=4096),
-    dict(code_mode='bpe', num_type='discrete', num_seq='factored',final_vocab_size=8192),
-    dict(code_mode='bpe', num_type='discrete', num_seq='factored',final_vocab_size=16384),
-    dict(code_mode='bpe', num_type='continuous', num_seq='factored',final_vocab_size=4096),
-    dict(code_mode='bpe', num_type='continuous', num_seq='factored',final_vocab_size=8192),
-    dict(code_mode='bpe', num_type='continuous', num_seq='factored',final_vocab_size=16384),
-    dict(code_mode='bpe', num_type='discrete', num_seq='factored',final_vocab_size=32768),
-    dict(code_mode='bpe', num_type='continuous', num_seq='factored',final_vocab_size=32768), 
-]
+    cfg_out = {
+        "TRAIN_FOLDER": data_root / cfg["paths"]["train_folder"],
+        "VAL_FOLDER":   data_root / cfg["paths"]["val_folder"],
+        "TEST_FOLDER":  data_root / cfg["paths"]["test_folder"],
+        "RUN_PATH":     data_root / cfg["paths"]["run_path"],
+        "N_TRAIN_FILES": cfg["train"]["n_train_files"],
+        "DEFAULT_COLS":  cfg["train"]["default_cols"],
+        "CONFIGS":       cfg["tokenizer_configs"],
+    }
+    return cfg_out
 
 ####END config ####
 ########################
@@ -89,12 +85,23 @@ else:
 #
 #######################
 ####helper functions####
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Bulk tokenization runner with YAML configs"
+    )
+    parser.add_argument(
+        "-c", "--config",
+        default="configs/config.yaml",
+        help="Path to YAML config file (default: config.yaml)",
+    )
+    return parser.parse_args()
 
-def load_as_single_df(path: str, num_files: int, cols: list = DEFAULT_COLS) -> pl.DataFrame:
+def load_as_single_df(path: str | Path, num_files: int, cols: list) -> pl.DataFrame:
     """
     Returns a single Polars dataframe with N of the parquet files at Path. Includes only cols specified in Cols.
     This is generally used to load the training data as a single dataframe for training the tokenizers.
     """
+    path = Path(path)
     files = [f"{path}/{i}.parquet" for i in range(num_files)]  # 0..291
     lf = pl.scan_parquet(files).select(cols)
     df = lf.collect(engine='streaming')
@@ -130,7 +137,6 @@ def load_and_train_tok(config:dict, train_df: pl.DataFrame, run_folder:str) -> T
     output_path is the base folder for the tokenization run. The sub-folders for each config setting will be created and populated based on the config.
     """    
     ## Fixing issue with their nomenclature MAY BE REMOVABLE IN THE FUTURE????? ###
-    train_df = fix_nomenclature(train_df)
     tag = Path(make_config_tag(config))
     run_folder = Path(run_folder)
     save_folder = run_folder / tag
@@ -148,16 +154,24 @@ def load_and_train_tok(config:dict, train_df: pl.DataFrame, run_folder:str) -> T
         logger.exception(f" ❌ Failed to train tokenizer {tag}: {e}")
     return tok, tag
 
+def get_output_paths(
+    save_folder: Path, input_file: Path
+) -> tuple[Path, Path]:
+    parent, filename = input_file.parts[-2:]
+    base_dir = save_folder / parent
+    event_path = base_dir / filename
+    num_path = base_dir / f"num_{filename}"
+    # Ensure the base dir exists (covers both)
+    base_dir.mkdir(parents=True, exist_ok=True)
+    return event_path, num_path
 
-def get_files_to_tokenize(folders: list) -> list:
-    files_to_tokenize = []
+def get_files_to_tokenize(folders: list[Path]) -> list[Path]:
+    files: list[Path] = []
     for folder in folders:
-        files = [file for file in Path(folder).iterdir()]
-        for file in files:
-            files_to_tokenize.append(file)
-    return files_to_tokenize
+        files.extend(sorted(p for p in folder.iterdir() if p.suffix == ".parquet"))
+    return files
 
-def tokenize_multiple_files(files: list, tok: Tokenizer, tag: Path, run_folder: str) -> None:
+def tokenize_multiple_files(files: list, tok: Tokenizer, tag: Path, run_folder: str, cols: list) -> None:
     run_folder = Path(run_folder)
     save_folder = run_folder / tag
     for f in files:
@@ -165,40 +179,28 @@ def tokenize_multiple_files(files: list, tok: Tokenizer, tag: Path, run_folder: 
         logger.info(f"Tokenizing {fpath}")
         try:
             print(f"  Tokenizing: {fpath}")
-            lf = pl.scan_parquet(str(fpath)).select(DEFAULT_COLS)
+            lf = pl.scan_parquet(str(fpath)).select(cols)
             df = lf.collect(engine='streaming')
             df = fix_nomenclature(df)
-
             encdf = tok.encode(df)
             encdf1 = pl.DataFrame(encdf[0])
             encdf2 = pl.DataFrame(encdf[1])
-
-            # mirror `train/0.parquet` under save_folder
-            parent, filename = fpath.parts[-2:]
-            out_file = save_folder / parent / filename
-
-            num_parent = parent
-            num_absolute = f"num_{filename}"
-            out_file_num = save_folder / num_parent / num_absolute
-
-            # make sure dirs exist
-            out_file.parent.mkdir(parents=True, exist_ok=True)
-            out_file_num.parent.mkdir(parents=True, exist_ok=True)
-
-            encdf1.write_parquet(out_file)
+            event_path, num_path = get_output_paths(save_folder, fpath)
+            encdf1.write_parquet(event_path)
+            logger.info(f"✅ wrote {event_path}")
             if not encdf2.is_empty():
-                encdf2.write_parquet(out_file_num)
+                encdf2.write_parquet(num_path)
+                logger.info(f"✅ wrote {num_path}")   
 
-            logger.info(f"✅ wrote {out_file}")
         except Exception as e:
             logger.exception(f"  failed on {fpath}: {e}")
 
-def train_and_tokenize(config: dict, train_df: pl.DataFrame, run_folder: str | Path, files: list) -> None:
+def train_and_tokenize(config: dict, train_df: pl.DataFrame, run_folder: str | Path, files: list, cols: list) -> None:
     run_folder = Path(run_folder)
     tok, tag = load_and_train_tok(config=config, train_df=train_df, run_folder=run_folder)
-    tokenize_multiple_files(files = files, tok = tok, tag=tag, run_folder=run_folder)
+    tokenize_multiple_files(files = files, tok = tok, tag=tag, run_folder=run_folder, cols=cols)
 
-def write_run_metadata(run_folder: str | Path, configs: list[dict]) -> None:
+def write_run_metadata(run_folder: str | Path, cfg: dict[str, Any]) -> None:
     """
     Write a README.md and run_metadata.json into run_folder
     describing this tokenization run.
@@ -210,15 +212,16 @@ def write_run_metadata(run_folder: str | Path, configs: list[dict]) -> None:
 
     meta = {
         "timestamp": timestamp,
-        "train_folder": TRAIN_FOLDER,
-        "val_folder": VAL_FOLDER,
-        "test_folder": TEST_FOLDER,
-        "n_train_files": N_TRAIN_FILES,
-        "default_cols": DEFAULT_COLS,
-        "configs": CONFIGS,
+        "train_folder": str(cfg["TRAIN_FOLDER"]),
+        "val_folder": str(cfg["VAL_FOLDER"]),
+        "test_folder": str(cfg["TEST_FOLDER"]),
+        "run_path": str(cfg["RUN_PATH"]),
+        "n_train_files": cfg["N_TRAIN_FILES"],
+        "default_cols": cfg["DEFAULT_COLS"],
+        "configs": cfg["CONFIGS"],
     }
 
-    # Machine-readable JSON for scripting / reproducibility
+    # JSON metadata
     (run_folder / "run_metadata.json").write_text(
         json.dumps(meta, indent=2)
     )
@@ -228,16 +231,17 @@ def write_run_metadata(run_folder: str | Path, configs: list[dict]) -> None:
         "# Tokenization run",
         "",
         f"- **Timestamp**: {timestamp}",
-        f"- **Train folder**: `{TRAIN_FOLDER}`",
-        f"- **Val folder**: `{VAL_FOLDER}`",
-        f"- **Test folder**: `{TEST_FOLDER}`",
-        f"- **N_TRAIN_FILES**: {N_TRAIN_FILES}",
-        f"- **DEFAULT_COLS**: `{DEFAULT_COLS}`",
+        f"- **Train folder**: `{meta['train_folder']}`",
+        f"- **Val folder**: `{meta['val_folder']}`",
+        f"- **Test folder**: `{meta['test_folder']}`",
+        f"- **RUN_PATH**: `{meta['run_path']}`",
+        f"- **N_TRAIN_FILES**: {meta['n_train_files']}",
+        f"- **DEFAULT_COLS**: `{meta['default_cols']}`",
         "",
         "## Configs",
         "",
         "```json",
-        json.dumps(CONFIGS, indent=2),
+        json.dumps(meta["configs"], indent=2),
         "```",
         "",
     ]
@@ -251,20 +255,35 @@ def write_run_metadata(run_folder: str | Path, configs: list[dict]) -> None:
 ############
 ####Main####
 def main():
+    args = parse_args()
+    cfg = load_config(args.config)
+
+    train_path = Path(cfg["TRAIN_FOLDER"])
+    val_path = Path(cfg["VAL_FOLDER"])
+    test_path = Path(cfg["TEST_FOLDER"])
+    run_path = Path(cfg["RUN_PATH"])
+    n_train_files = cfg["N_TRAIN_FILES"]
+    configs = cfg["CONFIGS"]
+    cols = cfg["DEFAULT_COLS"]
+
+
     logger.info(
         "Loaded the following configs:\n%s",
-        "\n".join(str(config) for config in CONFIGS)
+        "\n".join(str(config) for config in configs)
     )
-    train_df = load_as_single_df(TRAIN_FOLDER, N_TRAIN_FILES)
-    folders_to_tokenize = [Path(TRAIN_FOLDER), Path(VAL_FOLDER), Path(TEST_FOLDER)]
+
+    train_df = load_as_single_df(train_path, num_files=n_train_files, cols=cols)
+    train_df = fix_nomenclature(train_df)
+
+    folders_to_tokenize = [Path(train_path), Path(val_path), Path(test_path)]
     logger.info(
         "Will tokenize all files in the following folders:\n%s",
         "\n".join(str(folder) for folder in folders_to_tokenize)
     )
     files = get_files_to_tokenize(folders_to_tokenize)
-    write_run_metadata(RUN_PATH, CONFIGS)
-    for config in CONFIGS:
-        train_and_tokenize(config, train_df, RUN_PATH, files)
+    write_run_metadata(run_path, cfg)
+    for config in configs:
+        train_and_tokenize(config, train_df, run_path, files, cols=cols)
 
 if __name__ == "__main__":
     main()

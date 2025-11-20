@@ -72,29 +72,16 @@ Token_Vocab_EventExpr/
 └─ run_tokenization.py
 ```
 
-## Example Config Block
-``` Python
-TRAIN_FOLDER = '/path/to/data/raw/train'
-VAL_FOLDER   = '/path/to/data/raw/val_filtered'
-TEST_FOLDER  = '/path/to/data/raw/test_filtered'
-N_TRAIN_FILES = 292
-RUN_PATH = '/path/to/data/processed/run_DATE_TIME'
-DEFAULT_COLS = ["subject_id", "time", "code", "numeric_value", "text_value"]
-CONFIGS = [
-    dict(code_mode='concept', num_type='continuous', num_seq='factored'),
-    dict(code_mode='concept', num_type='continuous', num_seq='fused'),
-    dict(code_mode='concept', num_type='discrete', num_seq='factored'),
-    dict(code_mode='concept', num_type='discrete', num_seq='fused'),
-    dict(code_mode='bpe', num_type='discrete', num_seq='factored', final_vocab_size=4096),
-    dict(code_mode='bpe', num_type='discrete', num_seq='factored', final_vocab_size=8192),
-    dict(code_mode='bpe', num_type='discrete', num_seq='factored', final_vocab_size=16384),
-    dict(code_mode='bpe', num_type='continuous', num_seq='factored', final_vocab_size=4096),
-    dict(code_mode='bpe', num_type='continuous', num_seq='factored', final_vocab_size=8192),
-    dict(code_mode='bpe', num_type='continuous', num_seq='factored', final_vocab_size=16384),
-]
-```
+## Config Files
 
-Each config becomes a tag/folder like concept_discrete_factored or bpe_discrete_factored_4096.
+Config files live in /configs/
+
+By default, config/config.yaml will be loaded.
+
+You can load a different config file by passing the -c [path.to.config.yaml] or --config [path.to.config.yaml] when you run tokenize_batch.py
+
+By changing or using a different config.yaml file, you can change which directory files are being read from and written to, along with the configurations for the different types of tokenizers that will be trained and utilized for any given run of the tokenize_batch.py script.
+
 
 ## Process
 
