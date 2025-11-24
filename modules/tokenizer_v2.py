@@ -486,14 +486,19 @@ class Tokenizer:
             else:
                 df_bpe = df
                 
+            # 1. Prepare the tokenizer
             exploded_parts = df_bpe.select(pl.col("code_split").explode()).to_series().to_list()
             first_parts = df_bpe["code_split"].list.first().alias("first_item")
             st = list(set(first_parts))
             st.extend(["//", "<sos>", "<TIME>", "<NUM>","<ROW>"])
             st.extend([f"Q{i}" for i in range(self.n_bins + 1)])
-            self.tt = text_tokenizer(st,self.split_pattern,final_vocab_size=self.final_vocab_size)
-            text = "//".join(exploded_parts)
-            self.tt.train_bpe(text)
+            self.tt = text_tokenizer(st, self.split_pattern, final_vocab_size=self.final_vocab_size)
+            # 2. Create the LIST of rows (Do not use .join on the whole thing)
+            text_rows = df_bpe.select(
+                pl.col("code_split").list.join("//")
+            ).to_series().to_list()
+            # 3. Pass the list to the updated train_bpe
+            self.tt.train_bpe(text_rows)
             # save off some fixed token ids for reference later
             self.discrete_tokens = tuple(self.tt.encode(f"Q{i}")[0] for i in range(self.n_bins))
             self.time_token = self.tt.encode('<TIME>')[0]

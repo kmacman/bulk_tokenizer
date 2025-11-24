@@ -60,10 +60,8 @@ class Tokenizer:
                 out.append(0)
             elif len(c)>0:
                 # words = re.findall(self.split_pattern,c)
-                words = [w for w in c.split() if w]
-                for w in words:
-                    out.extend(b + 1 for b in w.encode("utf-8"))
-                    out.append(0)
+                out.extend(b + 1 for b in c.encode("utf-8"))
+                
         return out
     
     def _base_encode_split(self,text):
@@ -91,15 +89,29 @@ class Tokenizer:
                     split_indices.append(cur_idx)
         return out,split_indices
     
-    def train_bpe(self,text):
+    def train_bpe(self, text_or_list):
+        # Check if input is a list of strings
+        if isinstance(text_or_list, list):
+            # Process list logic
+            full_id_list = []
+            for row_str in text_or_list:
+                # reuse existing logic to get ids for this specific row
+                # _base_encode_pad automatically appends '0' at boundaries
+                row_ids = self._base_encode_pad(row_str)
+                full_id_list.extend(row_ids)
+            
+            # Convert the accumulated list to numpy
+            id_list = np.array(full_id_list, dtype=np.int32)
+            
+        else:
+            # Existing string logic
+            ids = self._base_encode_pad(text_or_list)
+            id_list = np.array(ids, dtype=np.int32)
         # train a bpe vocabulary from text
 
         if self.final_vocab_size is None or self.final_vocab_size <= self.base_vocab_size or self.base_vocab_size is None:
             raise Exception("Check vocab sizes. should not be None and final should be > base.")
 
-        # text to base ids with 0 inserted a chunk boundaries - no merges will occur across 0's
-        ids = self._base_encode_pad(text)
-        id_list = np.array(ids,dtype=np.int32)
         self.merges, self.vocab = trainFastIds(id_list,self.final_vocab_size,self.base_vocab_size)
         self.vocab_size = len(self.vocab)
         out = id_list[~np.isin(id_list, [-2, 0])]
