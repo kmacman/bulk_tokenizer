@@ -7,8 +7,17 @@ requires-python = ">=3.13"
 dependencies = [
     "ipykernel>=7.1.0",
     "jupyter>=1.1.1",
+    "meds-pipeline",
     "numpy>=2.3.5",
     "polars>=1.35.2",
     "pyyaml>=6.0.3",
     "regex>=2025.11.3",
 ]
+
+[tool.uv.workspace]
+members = [
+    "meds_pipeline",
+]
+
+[tool.uv.sources]
+meds-pipeline = { workspace = true, editable = true }

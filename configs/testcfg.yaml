@@ -1,0 +1,46 @@
+paths:
+  data_root: /nfs/roberts/project/pi_ajl89/kam385/Token_Vocab_EventExpr/data/  #This is the root data directory where /raw and /tokenized folders live
+  train_folder: raw/train_test                                               #Path to the training dataset
+  val_folder: raw/val_test                                          #Path to the FILTERED val set (rows with Codes outside of the Train set are removed)
+  test_folder: raw/test_test                                        #Path to the FILTERED test set
+  run_path: tokenized/11_26_new_lib_no_split                      #This is the folder that the subfolders from this training/tokenization run will be saved to
+
+train:
+  n_train_files: 10                                                   #The number of total parquet files in the train folder... could probably remove this and just have pathlib determine how many there are
+  default_cols:                                                         #These are the columns that are loaded from any given parquet file. I don't anticpate needing to change this, but it is here just incase.
+    - subject_id
+    - time
+    - code
+    - numeric_value
+    - text_value
+
+tokenizer_configs:                                                      #These are the configs of the tokenizers that will be trained when the script is run.
+  - code_mode: bpe
+    num_type: continuous
+    num_seq: factored
+    final_vocab_size: 4096
+    split_pattern: ~
+
+  - code_mode: bpe
+    num_type: discrete
+    num_seq: factored
+    final_vocab_size: 4096
+    split_pattern: ~
+
+  - code_mode: concept
+    num_type: discrete
+    num_seq: factored
+
+  - code_mode: concept
+    num_type: discrete
+    num_seq: fused
+
+  - code_mode: concept
+    num_type: continuous
+    num_seq: factored
+
+  - code_mode: concept
+    num_type: continuous
+    num_seq: fused
+
+

@@ -6,6 +6,12 @@ resolution-markers = [
     "python_full_version < '3.14'",
 ]
 
+[manifest]
+members = [
+    "bulk-tokenizer",
+    "meds-pipeline",
+]
+
 [[package]]
 name = "anyio"
 version = "4.11.0"
@@ -157,6 +163,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "ipykernel" },
     { name = "jupyter" },
+    { name = "meds-pipeline" },
     { name = "numpy" },
     { name = "polars" },
     { name = "pyyaml" },
@@ -167,6 +174,7 @@ dependencies = [
 requires-dist = [
     { name = "ipykernel", specifier = ">=7.1.0" },
     { name = "jupyter", specifier = ">=1.1.1" },
+    { name = "meds-pipeline", editable = "meds_pipeline" },
     { name = "numpy", specifier = ">=2.3.5" },
     { name = "polars", specifier = ">=1.35.2" },
     { name = "pyyaml", specifier = ">=6.0.3" },
@@ -831,6 +839,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/c7/74/97e72a36efd4ae2bc
 wheels = [
     { url = "https://files.pythonhosted.org/packages/af/33/ee4519fa02ed11a94aef9559552f3b17bb863f2ecfe1a35dc7f548cde231/matplotlib_inline-0.2.1-py3-none-any.whl", hash = "sha256:d56ce5156ba6085e00a9d54fead6ed29a9c47e215cd1bba2e976ef39f5710a76", size = 9516, upload-time = "2025-10-23T09:00:20.675Z" },
 ]
+
+[[package]]
+name = "meds-pipeline"
+version = "0.0.1"
+source = { editable = "meds_pipeline" }
 
 [[package]]
 name = "mistune"

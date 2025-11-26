@@ -1,0 +1,3 @@
+[submodule "meds_pipeline"]
+	path = meds_pipeline
+	url = https://github.com/ajloza/meds_pipeline

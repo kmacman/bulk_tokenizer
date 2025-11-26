@@ -1,7 +1,7 @@
 import polars as pl
 import logging
 from pathlib import Path
-from modules.tokenizer_v2 import Tokenizer
+from meds_pipeline.meds_pipeline.tokenizers.tokenizer import Tokenizer
 import pickle
 from datetime import datetime
 import json
@@ -160,7 +160,7 @@ def get_output_paths(
     parent, filename = input_file.parts[-2:]
     base_dir = save_folder / parent
     event_path = base_dir / filename
-    num_path = base_dir / f"num_{filename}"
+    num_path = base_dir / f"val_{filename}"
     # Ensure the base dir exists (covers both)
     base_dir.mkdir(parents=True, exist_ok=True)
     return event_path, num_path
