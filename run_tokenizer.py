@@ -8,6 +8,7 @@ import numpy as np
 import sys
 import json
 from datetime import datetime
+import sys
 
 # Set up logging
 logger = logging.getLogger("tokenizer")
@@ -112,14 +113,16 @@ def process_split(split_name: str, folder_path: Path, tokenizer: Tokenizer, outp
 
             # Progress Logging
             if (i + 1) % 10 == 0:
-                print(f"  Processed {i + 1}/{len(files)} files...", end="\r")
+                sys.stdout.write(f"\r  Processed {i + 1}/{len(files)} files...")
+                sys.stdout.flush()
 
         except Exception as e:
             logger.error(f"❌ Error on file {fpath}: {e}")
             # Optional: raise e # Uncomment to stop immediately on error
 
-    print(f"  ✅ Finished {split_name}. Total Codes: {total_codes:,}      ")
-
+    sys.stdout.write(f"\r  ✅ Finished {split_name}. Total Codes: {total_codes:,}      \n")
+    sys.stdout.flush()
+    
 def main():
     parser = argparse.ArgumentParser(description="Single Config Tokenizer Runner")
     
@@ -143,6 +146,7 @@ def main():
     parser.add_argument("--final_vocab_size", type=int, default=None)
     parser.add_argument("--bpe_training_sample", type=float, default=None)
     parser.add_argument("--bpe_training_seed", type=int, default=None)
+    parser.add_argument("--split_pattern", type=str)
 
     args = parser.parse_args()
     
@@ -179,6 +183,10 @@ def main():
         tok_config["bpe_training_sample"] = args.bpe_training_sample
     if args.bpe_training_seed:
         tok_config["bpe_training_seed"] = args.bpe_training_seed
+    if args.split_pattern:
+        if args.split_pattern == "None":
+            args.split_pattern = None
+        tok_config["split_pattern"] = args.split_pattern
 
     logger.info(f"Training tokenizer with: {tok_config}")
     tok = Tokenizer(**tok_config)
