@@ -143,9 +143,9 @@ def main():
     parser.add_argument("--code_mode", type=str, default="bpe")
     parser.add_argument("--num_type", type=str, default="discrete")
     parser.add_argument("--num_seq", type=str, default="factored")
-    parser.add_argument("--final_vocab_size", type=int, default=None)
-    parser.add_argument("--bpe_training_sample", type=float, default=None)
-    parser.add_argument("--bpe_training_seed", type=int, default=None)
+    parser.add_argument("--final_vocab_size", type=int, default=4096)
+    parser.add_argument("--bpe_training_sample", type=float, default=0.1)
+    parser.add_argument("--bpe_training_seed", type=int, default=42)
     parser.add_argument("--split_pattern", type=str)
 
     args = parser.parse_args()

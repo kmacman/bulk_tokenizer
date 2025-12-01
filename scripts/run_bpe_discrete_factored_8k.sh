@@ -3,6 +3,7 @@
 # ==========================================
 # 1. SETUP & PATHS (The "Separation")
 # ==========================================
+PYTHON_EXEC="/nfs/roberts/project/pi_ajl89/kam385/bulk_tokenizer/.venv/bin/python"
 
 # --- A. PYTHON SCRIPT LOCATION ---
 # Where the actual code lives
@@ -10,17 +11,17 @@ SCRIPT_PATH="/nfs/roberts/project/pi_ajl89/kam385/bulk_tokenizer/run_tokenizer.p
 
 # --- B. INPUT DATA (READ ONLY) ---
 # The absolute path to where the raw PARQUET files live
-INPUT_ROOT="/nfs/roberts/project/pi_ajl89/kam385/Token_Vocab_EventExpr/data/raw"
+INPUT_ROOT="/nfs/roberts/project/pi_ajl89"
 # Subfolders inside that root
-TRAIN_FOLDER="train_test"
-VAL_FOLDER="val_test"
-TEST_FOLDER="test_test"
+TRAIN_FOLDER="is533/mimic-iv/v1/meds/train"
+VAL_FOLDER="kam385/mimic-iv/v1/filtered/val_filtered"
+TEST_FOLDER="kam385/mimic-iv/v1/filtered/test_filtered"
 
 # --- C. OUTPUT DATA (WRITEABLE) ---
 # The absolute path to where you want the TOKENIZED files to go
-OUTPUT_ROOT="/nfs/roberts/project/pi_ajl89/kam385/bulk_tokenizer/data/tokenized"
+OUTPUT_ROOT="/nfs/roberts/project/pi_ajl89/kam385/mimic-iv/v1/tokenized"
 # The specific method name (this creates a subfolder in OUTPUT_ROOT)
-METHOD_NAME="test_bpe_discrete_4k"
+METHOD_NAME="bpe_discrete_factored_8k"
 
 # Combine them to get the final save destination
 OUTPUT_DIR="${OUTPUT_ROOT}/${METHOD_NAME}"
@@ -30,17 +31,17 @@ OUTPUT_DIR="${OUTPUT_ROOT}/${METHOD_NAME}"
 # ==========================================
 
 # Data Config
-N_TRAIN_FILES=10
+N_TRAIN_FILES=292
 COLS="subject_id time code numeric_value"
 
 # Tokenizer Hyperparameters
 CODE_MODE="bpe"
 NUM_TYPE="discrete"
 NUM_SEQ="factored"
-FINAL_VOCAB_SIZE=4096
+FINAL_VOCAB_SIZE=8192
 BPE_TRAINING_SAMPLE=0.1
 BPE_TRAINING_SEED=42
-SPLIT_PATTERN=""
+SPLIT_PATTERN="None"
 
 # ==========================================
 # 3. EXECUTION
@@ -56,7 +57,7 @@ echo "   Reading from: $INPUT_ROOT"
 echo "   Writing to:   $OUTPUT_DIR"
 echo "=========================================================="
 
-python "$SCRIPT_PATH" \
+"$PYTHON_EXEC" "$SCRIPT_PATH" \
     --data_root "$INPUT_ROOT" \
     --train_folder "$TRAIN_FOLDER" \
     --val_folder "$VAL_FOLDER" \
@@ -69,6 +70,7 @@ python "$SCRIPT_PATH" \
     --num_seq "$NUM_SEQ" \
     --final_vocab_size "$FINAL_VOCAB_SIZE" \
     --bpe_training_sample "$BPE_TRAINING_SAMPLE" \
-    --bpe_training_seed "$BPE_TRAINING_SEED"
+    --bpe_training_seed "$BPE_TRAINING_SEED" \
+    --split_pattern "$SPLIT_PATTERN"
 
 echo "✅ Run Complete. Files saved to $OUTPUT_DIR"

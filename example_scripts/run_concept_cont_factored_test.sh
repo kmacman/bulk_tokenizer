@@ -20,7 +20,7 @@ TEST_FOLDER="test_test"
 # The absolute path to where you want the TOKENIZED files to go
 OUTPUT_ROOT="/nfs/roberts/project/pi_ajl89/kam385/bulk_tokenizer/data/tokenized"
 # The specific method name (this creates a subfolder in OUTPUT_ROOT)
-METHOD_NAME="test_bpe_discrete_4k"
+METHOD_NAME="test_concept_cont_factored"
 
 # Combine them to get the final save destination
 OUTPUT_DIR="${OUTPUT_ROOT}/${METHOD_NAME}"
@@ -34,13 +34,12 @@ N_TRAIN_FILES=10
 COLS="subject_id time code numeric_value"
 
 # Tokenizer Hyperparameters
-CODE_MODE="bpe"
-NUM_TYPE="discrete"
+CODE_MODE="concept"
+NUM_TYPE="continuous"
 NUM_SEQ="factored"
 FINAL_VOCAB_SIZE=4096
 BPE_TRAINING_SAMPLE=0.1
 BPE_TRAINING_SEED=42
-SPLIT_PATTERN=""
 
 # ==========================================
 # 3. EXECUTION
