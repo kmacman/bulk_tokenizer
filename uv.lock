@@ -6,12 +6,6 @@ resolution-markers = [
     "python_full_version < '3.14'",
 ]
 
-[manifest]
-members = [
-    "bulk-tokenizer",
-    "meds-pipeline",
-]
-
 [[package]]
 name = "anyio"
 version = "4.11.0"
@@ -174,7 +168,7 @@ dependencies = [
 requires-dist = [
     { name = "ipykernel", specifier = ">=7.1.0" },
     { name = "jupyter", specifier = ">=1.1.1" },
-    { name = "meds-pipeline", editable = "meds_pipeline" },
+    { name = "meds-pipeline", git = "https://github.com/ajloza/meds_pipeline" },
     { name = "numpy", specifier = ">=2.3.5" },
     { name = "polars", specifier = ">=1.35.2" },
     { name = "pyyaml", specifier = ">=6.0.3" },
@@ -843,7 +837,7 @@ wheels = [
 [[package]]
 name = "meds-pipeline"
 version = "0.0.1"
-source = { editable = "meds_pipeline" }
+source = { git = "https://github.com/ajloza/meds_pipeline#159a41a313a293a62323894d054dcf5ebff6daf2" }
 
 [[package]]
 name = "mistune"

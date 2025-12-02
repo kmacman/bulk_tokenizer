@@ -1,7 +1,7 @@
 import polars as pl
 import logging
 from pathlib import Path
-from meds_pipeline.meds_pipeline.tokenizers.tokenizer import Tokenizer
+from meds_pipeline import Tokenizer
 import pickle
 import argparse
 import numpy as np

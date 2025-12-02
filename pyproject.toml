@@ -20,4 +20,4 @@ members = [
 ]
 
 [tool.uv.sources]
-meds-pipeline = { workspace = true, editable = true }
+meds-pipeline = { git = "https://github.com/ajloza/meds_pipeline" }
