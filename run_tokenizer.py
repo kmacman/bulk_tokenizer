@@ -106,7 +106,17 @@ def process_split(split_name: str, folder_path: Path, tokenizer: Tokenizer, outp
             # Load ONE file into memory
             df = pl.read_parquet(fpath, columns=cols)
             df = fix_nomenclature(df)
-            
+
+            # Clip values to a small epsilon to prevent math domain error (log(0))
+            # If you expect negative values (e.g., Base Excess), you might need to 
+            # filter by specific codes, but this is the general fix for LogNormal crashes.
+            df = df.with_columns(
+                pl.when(pl.col("numeric_value") <= 1e-9)
+                .then(1e-9)
+                .otherwise(pl.col("numeric_value"))
+                .alias("numeric_value")
+            )
+
             # Tokenize this chunk
             # Note: If a patient is split across files, their history will be broken here.
             enc_tuple = tokenizer.encode(df)
