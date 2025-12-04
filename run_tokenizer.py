@@ -1,7 +1,7 @@
 import polars as pl
 import logging
 from pathlib import Path
-from meds_pipeline import Tokenizer
+from meds_pipeline import Tokenizer, get_distribution_summary, analyze_distributions
 import pickle
 import argparse
 import numpy as np
@@ -30,6 +30,27 @@ def fix_nomenclature(df: pl.DataFrame) -> pl.DataFrame:
         .otherwise(pl.col("code").cast(pl.Utf8))
         .alias("code")
     )
+
+def distribution_summary_dict(df: pl.DataFrame) -> dict:
+    results = analyze_distributions(
+    df, 
+    value_col="numeric_value", 
+    group_col="code",
+    clip_min=1.0,
+    clip_max=99.0,
+    # top_n=100  # optional
+    )
+
+    normal_codes = results.filter(pl.col("recommendation") == "normal")
+    minmax_codes = results.filter(pl.col("recommendation") == "minmax")
+
+    distribution_code_map = {
+    'normal': normal_codes.select("code").to_series().to_list(),
+    'lognormal': results.filter(pl.col("recommendation") == "lognormal").select("code").to_series().to_list(),
+    'gamma': results.filter(pl.col("recommendation") == "gamma").select("code").to_series().to_list(),
+    'minmax': minmax_codes.select("code").to_series().to_list()
+    }
+    return distribution_code_map
 
 def save_run_config(args, output_dir: Path):
     """Saves all script arguments to a JSON file for reproducibility."""
@@ -172,10 +193,12 @@ def main():
     train_df = fix_nomenclature(train_df)
 
     # 2. Train Tokenizer
+    distributions = distribution_summary_dict(train_df)
     tok_config = {
         "code_mode": args.code_mode,
         "num_type": args.num_type,
         "num_seq": args.num_seq,
+        "distributions": distributions
     }
     if args.final_vocab_size:
         tok_config["final_vocab_size"] = args.final_vocab_size

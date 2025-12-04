@@ -20,7 +20,7 @@ TEST_FOLDER="test_test"
 # The absolute path to where you want the TOKENIZED files to go
 OUTPUT_ROOT="/nfs/roberts/project/pi_ajl89/kam385/bulk_tokenizer/data/tokenized"
 # The specific method name (this creates a subfolder in OUTPUT_ROOT)
-METHOD_NAME="test_bpe_discrete_4k"
+METHOD_NAME="new_tok_test"
 
 # Combine them to get the final save destination
 OUTPUT_DIR="${OUTPUT_ROOT}/${METHOD_NAME}"
